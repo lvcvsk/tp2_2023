@@ -37,6 +37,34 @@ void dfs_t(int v, vector<bool> &visitado, vector<int> &componente, int &min){
     }
 }
 
+void dfs_ts(int v, vector<bool> &visitado, stack<int> &s){
+    visitado[v] = true;
+
+    for (int u : adj_scc[v]){
+        if(!visitado[u]){
+            dfs_ts(u, visitado, s);
+        }
+    }
+    s.push(v);
+}
+
+vector<int> topologicalSort(vector<bool> &visitado, vector<int> &nodos){
+    stack<int> s;
+    vector<int> resultado;
+    for (int u  : nodos){
+        if (!visitado[u]){
+            dfs_ts(u, visitado, s);
+        }
+    }
+
+    while (!s.empty()) {
+        resultado.push_back(s.top());
+        s.pop();
+    }
+    return resultado;
+}
+
+
 void kosaraju(){
     vector<bool> visitado(N, false);
     stack<int> s;
@@ -106,14 +134,11 @@ int main(){
 
     vector<bool> visitado(nodosCfc.size(), false);
 
-    for (int u : nodosCfc){
-        if (!visitado[u]){
-            ...
-        }
-    }
+    
+    vector<int> sorted = topologicalSort(visitado, nodosCfc);
 
-
-    print(adj_scc);
+    for (int i = 0; i < sorted.size(); i++) cout << sorted[i] << " ";
+    // print(adj_scc);
 
     return 0;
 }
