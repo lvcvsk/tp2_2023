@@ -54,13 +54,15 @@ vector<int> topologicalSort(vector<bool> &visitado, vector<int> &nodos){
     for (int u  : nodos){
         if (!visitado[u]){
             dfs_ts(u, visitado, s);
+            resultado.push_back(s.top());
+
         }
     }
 
-    while (!s.empty()) {
+    /*while (!s.empty()) {
         resultado.push_back(s.top());
         s.pop();
-    }
+    }*/
     return resultado;
 }
 
@@ -135,9 +137,13 @@ int main(){
     vector<bool> visitado(nodosCfc.size(), false);
 
     
-    vector<int> sorted = topologicalSort(visitado, nodosCfc);
+    vector<int> res = topologicalSort(visitado, nodosCfc);
 
-    for (int i = 0; i < sorted.size(); i++) cout << sorted[i] << " ";
+    sort(res.begin(), res.end());
+
+    cout << res.size() << endl;
+    for (int i = 0; i < res.size(); i++) cout << res[i] << " ";
+    cout << endl;
     // print(adj_scc);
 
     return 0;
