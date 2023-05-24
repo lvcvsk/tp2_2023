@@ -66,6 +66,36 @@ vector<int> topologicalSort(vector<bool> &visitado, vector<int> &nodos){
     return resultado;
 }
 
+void countingSort(vector<int>& arr) {
+    int max_value = *max_element(arr.begin(), arr.end()); // Find the maximum value in the vector
+    int min_value = *min_element(arr.begin(), arr.end()); // Find the minimum value in the vector
+
+    int range = max_value - min_value + 1;
+    vector<int> count(range, 0); // Create a count vector with initial values as 0
+
+    // Count the occurrences of each element in the input vector
+    for (int i = 0; i < arr.size(); ++i) {
+        count[arr[i] - min_value]++;
+    }
+
+    // Modify the count vector to store the actual position of each element in the sorted output
+    for (int i = 1; i < count.size(); ++i) {
+        count[i] += count[i - 1];
+    }
+
+    vector<int> sorted(arr.size());
+
+    // Build the sorted output vector
+    for (int i = arr.size() - 1; i >= 0; --i) {
+        sorted[count[arr[i] - min_value] - 1] = arr[i];
+        count[arr[i] - min_value]--;
+    }
+
+    // Copy the sorted vector back to the input vector
+    for (int i = 0; i < arr.size(); ++i) {
+        arr[i] = sorted[i];
+    }
+}
 
 void kosaraju(){
     vector<bool> visitado(N, false);
