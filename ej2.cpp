@@ -26,7 +26,7 @@ void dfs_inicial(int v, vector<bool> &visitado, stack<int> &s){
     s.push(v);
 }
 
-void dfs_t(int v, vector<bool> &visitado, vector<int> &componente, int min){
+void dfs_t(int v, vector<bool> &visitado, vector<int> &componente, int &min){
     visitado[v] = true;
     componente.push_back(v);
 
