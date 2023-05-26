@@ -8,10 +8,10 @@ int n, m, N;
 
 vector<vector<int>> D;
 vector<vector<int>> D_T;
-vector<vector<int>> adj_scc;
-
-vector<int> raices;
 vector<int> nodosCfc;
+
+//vector<vector<int>> adj_scc;
+//vector<int> raices;
 
 
 
@@ -26,7 +26,7 @@ void dfs_inicial(int v, vector<bool> &visitado, stack<int> &s){
     s.push(v);
 }
 
-void dfs_t(int v, vector<bool> &visitado, vector<int> &componente, int &min){
+void dfs_t(int v, vector<bool> &visitado, vector<int> &componente, int min){
     visitado[v] = true;
     componente.push_back(v);
 
@@ -39,32 +39,27 @@ void dfs_t(int v, vector<bool> &visitado, vector<int> &componente, int &min){
     }
 }
 
+/*
 void dfs_ts(int v, vector<bool> &visitado, stack<int> &s){
     visitado[v] = true;
 
-    for (int u : adj_scc[v]){
+    for (int u : D[v]){
         if(!visitado[u]){
             dfs_ts(u, visitado, s);
         }
     }
     s.push(v);
-}
+}*/
 
 vector<int> topologicalSort(vector<bool> &visitado, vector<int> &nodos){
     stack<int> s;
     vector<int> resultado;
     for (int u  : nodos){
         if (!visitado[u]){
-            dfs_ts(u, visitado, s);
+            dfs_inicial(u, visitado, s);
             resultado.push_back(s.top());
-
         }
     }
-
-    /*while (!s.empty()) {
-        resultado.push_back(s.top());
-        s.pop();
-    }*/
     return resultado;
 }
 
@@ -72,7 +67,7 @@ void kosaraju(){
     vector<bool> visitado(N, false);
     stack<int> s;
 
-    raices.resize(N, 0);
+    //raices.resize(N, 0);
 
     for(int i = 1; i < N; i++){
         if(!visitado[i]){
@@ -90,12 +85,12 @@ void kosaraju(){
             dfs_t(x, visitado, componente, minimo);
 
             int raiz = minimo;
-            for (int u : componente) raices[u] = raiz;
+            //for (int u : componente) raices[u] = raiz;
             nodosCfc.push_back(raiz);
             componente.clear();
         }
     }
-    
+    /*
     for (int u = 1; u < N; u++){
         for (int v : D[u]){
             int raiz_u = raices[u];
@@ -107,7 +102,7 @@ void kosaraju(){
                     }
             }
         }
-    }
+    } */
 }
 
 void print(vector<vector<int>> &D){
@@ -124,7 +119,8 @@ void print(vector<vector<int>> &D){
 int main(){
     cin >> n >> m;
     N = n+1;
-    D.resize(N); D_T.resize(N); adj_scc.resize(N);
+    D.resize(N); D_T.resize(N); 
+    //adj_scc.resize(N);
     for (int i = 0; i < m; i++){
         int u, v;
         cin >> u >> v;
