@@ -130,11 +130,9 @@ int main(){
 
     kosaraju();
 
-    vector<bool> visitado(nodosCfc.size(), false);
-
+    vector<bool> visitado(N, false);
     
     vector<int> res = topologicalSort(visitado, nodosCfc);
-
 
     //sort(res.begin(), res.end());
 
