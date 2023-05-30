@@ -1,18 +1,16 @@
+#include <bits/stdc++.h>
 #include <iostream>
-#include <tuple>
-#include <vector>
-#include <algorithm>
+#include <utility>
+#include <chrono>
 #include <cmath>
 
 using namespace std;
-const double inf = 1e18;
 
-vector<tuple<double,int,int>> E;
-vector<tuple<int,int>> oficinas;
-
-int n,r,u,v,w;
-
-double utp; double fibra;
+int n,w,u,v;
+double r;
+vector<tuple<double, int, int>> E;
+vector<tuple<double,double>> coordenadas;
+vector<tuple<double,double> > resultados;
 
 struct DSU{
 
@@ -34,88 +32,81 @@ struct DSU{
         rank[u] = max(rank[u],rank[v]+1);
     }
 
-    vector<int> padres(){
-        return padre;
-    }
-
     vector<int> padre;
     vector<int> rank;
 };
 
-double distancia(tuple<int,int> p1, tuple<int,int> p2){
-    int deltaX = abs( get<0>(p1) - get<0>(p2));
-    int deltaY = abs(get<1>(p1) - get<1>(p2));
+tuple<double,double> kruskal(){
+    double costo_utp= 0;
+    double costo_fibra= 0;
+    sort(E.begin(),E.end());
+    int aristas = 0;
+    DSU dsu(n);
+
+    for(auto e : E){
+        double dist = get<0>(e);
+        int x = get<1>(e);
+        int y = get<2>(e);
+        if(w== n-aristas)
+            break;
+        //si (u,v) es arista segura
+        if(dsu.find(x) != dsu.find(y)){
+            // agregar
+            dsu.unite(x,y);
+            aristas++;
+            if(dist<=r){
+                costo_utp += dist * static_cast<double>(u);
+            }
+            else
+                costo_fibra+= dist * static_cast<double>(v);
+        }
+    }
+    return {costo_utp,costo_fibra};
+}
+
+//Distancia entre dos puntos
+double distancia(tuple<double,double> p1, tuple<double,double> p2){
+    double deltaX = get<0>(p1) - get<0>(p2);
+    double deltaY = get<1>(p1) - get<1>(p2);
     double distance = sqrt(deltaX * deltaX + deltaY * deltaY);
     return distance;
 }
 
-vector<int> kruskal_corto(){
-    sort(E.begin(),E.end());
-    //double res = 0;
-    int aristas = 0;
-    DSU dsu(n);
-    for(int i = 0; i < n - w; i++){
-        //si (u,v) es arista segura
-        if(dsu.find(u) != dsu.find(v)){
-            // agregar
-            dsu.unite(u,v);
-            aristas++;
-            //res += c;
-        }
-    }
-    //if(aristas == n-1) cout<<res<<endl;
-    //else cout<<"IMPOSSIBLE\n";
-    return dsu.padres();
-}
+int main() {
+    int c; //casos de test
+    cin>> c;
+    for(int i=0; i<c ;i++){ 
+        cin>>n;     //cantidad de nodos
+        cin>>r; 
+        cin>>w;     //cantidad de modems
+        cin>>u;    //costo por metro de UTP 
+        cin>>v;    //costo por metro de fibra óptica
+        coordenadas.clear();
+        E.clear();
 
-vector<vector<int>> conseguir_conexas (vector<int> v){
-    vector<vector<int>> comp(n, vector<int>());
+        //creo mi vector de aristas y sus costos
 
-    for (int i = 0; i < v.size(); i++){
-        comp[v[i]].push_back(i);
-    }
+        //implemento kruskal, guardar los valores para imprimirlos al final
+        //auto start = chrono::high_resolution_clock::now();
 
-    vector<vector<int>> res;
-
-    for(vector<int> u : comp){
-        if (u.size() != 0){
-            res.push_back(u);
-        }
-    }
-    return res;
-}
-
-int main(){
-    int c;
-    cin >> c;
-    int q = 1;
-    while (q <= c){
-        q++;
-        cin >> n >> r >> w >> u >> v;
-        for (int i = n; i < n; i++){
-            int x,y;
-            cin >> x >> y;
-            oficinas.push_back(make_tuple(x,y));
-        }
-        for(int i = 0; i < n; i++){
-            for(int j = 1; j < n - 1; j++){
-                double dist = distancia(oficinas[i],oficinas[j]);
-                tuple<double,int,int> temp = make_tuple(dist,i,j);
-                E.push_back(temp);
+        for(int i=0; i<n ;i++){
+            double a,b; float dist;
+            cin>>a>>b;
+            coordenadas.push_back({a,b});
+            for(int j=0; j<coordenadas.size()-1;j++){
+                dist= distancia(coordenadas[coordenadas.size()-1], coordenadas[j]);
+                E.push_back({dist,j,i});
             }
         }
-        utp = 0.0; fibra = 0.0;
-
-        vector<int> padrastros = kruskal_corto();
-        vector<vector<int>> comp_conexas = conseguir_conexas(padrastros);
-
-        for(int i = 0; i < comp_conexas.size(); i++){
-            for (int j = 0; i < comp_conexas[i].size(); j++){
-                cout << comp_conexas[i][j] << " ";
-            }
-            cout << endl;
-        }
-
-        cout << "Caso #" << q << ": " << utp << " " << fibra << endl;
+        resultados.push_back(kruskal());
+        //auto diff = chrono::high_resolution_clock::now() - start;
+	    //auto t1 = chrono::duration_cast<chrono::milliseconds>(diff);
+        //cout << "Tomo para una instancia n: " << n << ". " << t1.count() << " ms" << endl;
     }
+
+    for(int i=0; i<resultados.size() ; i++){
+        cout<<"Caso #"<<i+1<<": "<< fixed << setprecision(3)<< get<0>(resultados[i])<<" "<<get<1>(resultados[i])<<endl;
+    }
+    
+    return 0;
 }

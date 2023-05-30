@@ -2,24 +2,43 @@
 #include<vector>
 #include<utility>
 #include<set>
-#include<map>
-#include <boost/math/special_functions/binomial.hpp>
 #include <iomanip>
 using namespace std;
 
 
-//vector< pair<int,vector<int> > > G;
-map<int, set<int> > G;
+//Grafo, vector de vecindades
+vector< set<int> > G;
 
-vector<int> niveles(G.size(), 0);
+//nos niveles de cada nodo en el árbol dfs
+vector<int> niveles;
+
+//aquel nodo de menor nivel al que se puede llegar a traves de los vecinos (sin contar al padre) o sus hijos
 vector<int> menor_ancestro;
 
-vector<int> tamanio_subarbol(G.size(),0);
+//en el árbol dfs, la cantidad de nodos contando al padre y sus hijos
+vector<int> tamanio_subarbol;
 
-vector<bool> visitado(G.size(), false);
-vector< pair<int,int> > aristas_puente;
+vector<bool> visitado;
+vector< pair<int,int> > aristas_puente;      //se utiliza solo para debuggear 
 
-vector<int> tamanio_comp_conexas;
+long casos_favorables;
+
+//Implemento el numero combinatorio
+long int comb(int n, int k){
+    long int matriz[k][n];
+    for(int i=0; i<n ;i++)
+        matriz[0][i]= i+1;
+    
+    for(int i=1; i<k ;i++)
+        matriz[i][i]=1;
+    
+    for(int i=1; i<k; i++){
+        for(int j=i+1; j<n ;j++)
+            matriz[i][j]= matriz[i-1][j-1]+matriz[i][j-1];
+    }
+    
+    return matriz[k-1][n-1];
+}
 
 //utilizo dfs para construirme un arbol
 void dfs(int v, int nivel){
@@ -29,41 +48,46 @@ void dfs(int v, int nivel){
     for(int w :  G[v]){
         if(!visitado[w]){
             dfs(w, nivel+1);
+
+            //si a traves de este hijo puedo encontrar un camino a un nodo de nivel inferior a v, actualizo
             if(niveles[menor_ancestro[w]]<niveles[menor_ancestro[v]])
                 menor_ancestro[v]= menor_ancestro[w];
+            
+            if(niveles[menor_ancestro[w]]>niveles[v]){
+                aristas_puente.push_back(make_pair(v,w));
+
+                //si vw es arista puente calculo las comb favorables con los nodos debajo de mi arbol
+                //luego los "borro" de mi arbol modificando tamanio_subarbol
+                if(tamanio_subarbol[w]>=2)
+                    casos_favorables+= comb(tamanio_subarbol[w],2);
+                tamanio_subarbol[w]= 0;
+            }
+
+            //el tamaño del subarbol que incluye a b incluye la suma de todos los subárboles
             tamanio_subarbol[v]+=tamanio_subarbol[w];
         }
         else{
+            //si y visite ese nodo y ese vertice me lleva a un nodo de un nivel menor, actualizo
             if( niveles[w]+1!=niveles[v] && niveles[w]<niveles[menor_ancestro[v]])
                 menor_ancestro[v]= w ;
         }
-
-        if(menor_ancestro[w]>niveles[v])
-            aristas_puente.push_back(make_pair(v,w));
+    }
+    if(niveles[v]==0){
+        //cuando llego a la raiz calculo los casos favorables con la cantidad de nodos que no "eliminé"
+        if(tamanio_subarbol[v]>=2)
+            casos_favorables+= comb(tamanio_subarbol[v],2);
     }
 }
 
-//Funcion basada en dfs para descubrir componentes conexas y anotar en v la cantidad de nodos
-void comp_conexa(int v){
-    visitado[v]= true;
-    tamanio_subarbol[v]+=1;
-    for(int w : G[v]){
-        if(!visitado[w]){
-            comp_conexa(w);
-            tamanio_subarbol[v]+=tamanio_subarbol[w];
-        }
-    }
-}
 
 int main(){
     int N; int M;
+    
     //recibo los valores de entrada
     cin>>N; cin>>M;
    
-    for(int i=0; i<N ; i++){
-        set<int> vecinos;
-        G[i]=vecinos;
-    }
+    //inicializo G
+    G= vector< set<int>> (N,set<int>());
 
     for(int i=0; i<M ;i++){
         int a; int b;
@@ -72,49 +96,27 @@ int main(){
         G[b-1].insert(a-1);
     }
 
-
+    //inicializo el verctor
     for(int i=0; i<G.size() ;i++){
         menor_ancestro.push_back(i);
     }
 
     //Utilizo dfs para descrubrir las aristas puente
-    niveles= vector(G.size(), 0);
-    tamanio_subarbol = vector(G.size(),0);
-    visitado = vector(G.size(), false);
-    for(int nodo=0; nodo<G.size() ; nodo++){
-        dfs(nodo,0);
-    }
 
-    //Elimino las aristas puente
-    for(pair<int,int> arista: aristas_puente){
-        G[arista.first].erase(arista.second);
-        G[arista.second].erase(arista.first);
-    }
+    niveles= vector<int>(N,0);
+    tamanio_subarbol= vector<int>(N,0);
+    visitado= vector<bool>(N,false);
+    
+    casos_favorables= 0;
 
-    //Uso dfs para descubrir las componentes conexas
-    visitado= visitado = vector(G.size(), false);
-    tamanio_subarbol = vector(G.size(),0);
-
-    for(int nodo; nodo<G.size() ;nodo++){
-        if(!visitado[nodo]){
-            comp_conexa(nodo);
-            tamanio_comp_conexas.push_back(tamanio_subarbol[nodo]);
-        }
-    }
+    //aplico dfs a nodo cualquiera, ya que el grafo es conexo
+    dfs(0,0);
 
     //calculo las probabilidades
-    int combinaciones=0;
-    for(int i=0; i<tamanio_comp_conexas.size() ;i++){
-        for(int j=0; j<tamanio_comp_conexas.size() ;j++){
-            if(i!=j)
-                combinaciones+= tamanio_comp_conexas[i]*tamanio_comp_conexas[j];
-        }
-    }
+    double prob_perder= 1-((double)casos_favorables/comb(N, 2));
 
-    combinaciones/=2;
-    double res= combinaciones/boost::math::binomial_coefficient<double>(N, 2);
-
-    cout << setprecision(5) << res << endl;
+    cout << setprecision(5) << prob_perder << endl;
 
     return 0;
 }
+	
